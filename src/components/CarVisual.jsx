@@ -7,21 +7,24 @@ const SmokeCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     let animationFrame;
+
     const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
-    const resize = () => {
-      canvas.width = canvas.clientWidth * DPR;
-      canvas.height = canvas.clientHeight * DPR;
-      ctx.scale(DPR, DPR);
+    const setScale = () => {
+      const { clientWidth: w, clientHeight: h } = canvas;
+      canvas.width = Math.max(1, Math.floor(w * DPR));
+      canvas.height = Math.max(1, Math.floor(h * DPR));
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     };
-    resize();
-    window.addEventListener('resize', resize);
+
+    setScale();
+    const onResize = () => setScale();
+    window.addEventListener('resize', onResize);
 
     const puffs = [];
 
-    // spawn initial puffs for entrance
     const spawn = () => {
-      const baseY = canvas.clientHeight * 0.65;
+      const baseY = canvas.clientHeight * 0.7;
       const leftX = canvas.clientWidth * 0.28;
       const rightX = canvas.clientWidth * 0.72;
       const wheel = Math.random() > 0.5 ? leftX : rightX;
@@ -37,25 +40,28 @@ const SmokeCanvas = () => {
       });
     };
 
-    let spawnTime = 0;
+    let last = 0;
 
     const loop = (t) => {
-      if (!spawnTime) spawnTime = t;
-      const dt = t - spawnTime;
-      spawnTime = t;
+      if (!last) last = t;
+      const dt = t - last;
+      last = t;
 
-      ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      // Clear
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
 
       // spawn faster on load for a burst, then ease
-      const spawnCount = Math.max(1, Math.floor(4 - Math.min(t / 1000, 3)));
-      for (let i = 0; i < spawnCount; i++) spawn();
+      const burst = Math.max(1, Math.floor(4 - Math.min(t / 1000, 3)));
+      for (let i = 0; i < burst; i++) spawn();
 
       for (let i = puffs.length - 1; i >= 0; i--) {
         const p = puffs[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.r += p.grow;
-        p.o -= p.fade;
+        p.x += p.vx * (dt / 16.6);
+        p.y += p.vy * (dt / 16.6);
+        p.r += p.grow * (dt / 16.6);
+        p.o -= p.fade * (dt / 16.6);
         if (p.o <= 0.02) {
           puffs.splice(i, 1);
           continue;
@@ -75,7 +81,7 @@ const SmokeCanvas = () => {
     animationFrame = requestAnimationFrame(loop);
     return () => {
       cancelAnimationFrame(animationFrame);
-      window.removeEventListener('resize', resize);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
 
@@ -112,13 +118,13 @@ const CarVisual = () => {
                   <div className="mx-auto mt-2 h-2 w-3/4 rounded-full bg-gradient-to-r from-red-700 via-red-500 to-red-700 blur-[2px]" />
                 </div>
 
-                {/* Wheels with spinning tires */}
+                {/* Wheels with spinning tires (respects reduced-motion) */}
                 <div className="absolute left-[20%] bottom-[16%] h-16 w-16 rounded-full bg-zinc-800 shadow-inner ring-2 ring-zinc-600">
-                  <div className="absolute inset-1 animate-[spin_0.9s_linear_infinite] rounded-full border-4 border-transparent border-t-red-500 border-b-red-500" />
+                  <div className="absolute inset-1 motion-safe:animate-[spin_0.9s_linear_infinite] rounded-full border-4 border-transparent border-t-red-500 border-b-red-500" />
                   <div className="absolute inset-3 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900" />
                 </div>
                 <div className="absolute right-[20%] bottom-[16%] h-16 w-16 rounded-full bg-zinc-800 shadow-inner ring-2 ring-zinc-600">
-                  <div className="absolute inset-1 animate-[spin_0.9s_linear_infinite] rounded-full border-4 border-transparent border-t-red-500 border-b-red-500" />
+                  <div className="absolute inset-1 motion-safe:animate-[spin_0.9s_linear_infinite] rounded-full border-4 border-transparent border-t-red-500 border-b-red-500" />
                   <div className="absolute inset-3 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900" />
                 </div>
 

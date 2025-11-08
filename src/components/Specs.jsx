@@ -1,9 +1,9 @@
 import React from 'react';
-import { Speedometer, Gauge, Zap, Wind } from 'lucide-react';
+import { Gauge, Zap, Wind } from 'lucide-react';
 
 const specs = [
   {
-    icon: <Speedometer className="h-6 w-6 text-red-500" />,
+    icon: <Gauge className="h-6 w-6 text-red-500" />,
     title: 'Top Speed',
     value: '350 km/h',
     desc: 'Wind-tunnel refined aerodynamics for blistering straights.'
